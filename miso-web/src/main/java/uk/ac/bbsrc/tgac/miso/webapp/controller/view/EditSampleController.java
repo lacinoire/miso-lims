@@ -103,8 +103,6 @@ import uk.ac.bbsrc.tgac.miso.webapp.util.MisoWebUtils;
 @RequestMapping("/sample")
 public class EditSampleController {
 
-  private final ObjectMapper mapper = new ObjectMapper();
-
   @Autowired
   private ProjectService projectService;
   @Autowired
@@ -131,6 +129,8 @@ public class EditSampleController {
   private AuthorizationManager authorizationManager;
   @Autowired
   private IndexChecker indexChecker;
+  @Autowired
+  private ObjectMapper mapper;
 
   @Value("${miso.detailed.sample.enabled}")
   private Boolean detailedSample;
@@ -546,7 +546,7 @@ public class EditSampleController {
 
   @GetMapping("/{id}/qc-hierarchy")
   public ModelAndView getQcHierarchy(@PathVariable long id, ModelMap model) throws IOException {
-    return MisoWebUtils.getQcHierarchy("Sample", id, qcNodeService::getForSample, model);
+    return MisoWebUtils.getQcHierarchy("Sample", id, qcNodeService::getForSample, model, mapper);
   }
 
 }

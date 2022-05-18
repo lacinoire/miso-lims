@@ -48,6 +48,8 @@ public class EditBoxController {
 
   @Autowired
   private BoxService boxService;
+  @Autowired
+  private ObjectMapper mapper;
 
   public void setBoxService(BoxService boxService) {
     this.boxService = boxService;
@@ -106,7 +108,6 @@ public class EditBoxController {
 
     // add JSON
     Collection<BoxableView> contents = boxService.getBoxContents(box.getId());
-    ObjectMapper mapper = new ObjectMapper();
     model.put("boxJSON", mapper.writer().writeValueAsString(Dtos.asDtoWithBoxables(box, contents)));
 
     return new ModelAndView("/WEB-INF/pages/editBox.jsp", model);

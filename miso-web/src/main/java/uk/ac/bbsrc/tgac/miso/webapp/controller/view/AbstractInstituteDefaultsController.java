@@ -30,8 +30,8 @@ import uk.ac.bbsrc.tgac.miso.webapp.util.ListItemsPageWithAuthorization;
 
 public abstract class AbstractInstituteDefaultsController<Model extends Aliasable, Dto> {
 
-  private final BulkEditTableBackend<Model, Dto> bulkEditBackend = new BulkEditTableBackend<Model, Dto>(getType(), getDtoClass(),
-      getName()) {
+  private final BulkEditTableBackend<Model, Dto> bulkEditBackend = new BulkEditTableBackend<Model, Dto>(getType(),
+      getDtoClass(), getName(), mapper) {
 
     @Override
     protected Dto asDto(Model model) {
@@ -49,17 +49,10 @@ public abstract class AbstractInstituteDefaultsController<Model extends Aliasabl
     }
   };
 
-  private final ListItemsPage listPage = new ListItemsPageWithAuthorization(getType(), this::getAuthorizationManager) {
-
-    @Override
-    protected void writeConfigurationExtra(ObjectMapper mapper, ObjectNode config) throws IOException {
-      AbstractInstituteDefaultsController.this.writeConfiguration(mapper, config);
-    }
-
-  };
-
   @Autowired
   private AuthorizationManager authorizationManager;
+  @Autowired
+  private ObjectMapper mapper;
 
   protected abstract Dto asDto(Model model);
 
@@ -68,7 +61,7 @@ public abstract class AbstractInstituteDefaultsController<Model extends Aliasabl
     if (quantity == null || quantity <= 0)
       throw new RestException("Must specify quantity of " + getType() + " to create", Status.BAD_REQUEST);
 
-    return new BulkCreateTableBackend<Dto>(getType(), getDtoClass(), getName(), getBlankModel(), quantity) {
+    return new BulkCreateTableBackend<Dto>(getType(), getDtoClass(), getName(), getBlankModel(), quantity, mapper) {
 
       @Override
       protected void writeConfiguration(ObjectMapper mapper, ObjectNode config) throws IOException {
@@ -101,8 +94,13 @@ public abstract class AbstractInstituteDefaultsController<Model extends Aliasabl
   @RequestMapping("/list")
   public ModelAndView list(ModelMap model) throws IOException {
     model.addAttribute("title", getName());
-    return listPage.list(model,
-        getAll().stream().map(AbstractInstituteDefaultsController.this::asDto));
+    ListItemsPage listPage = new ListItemsPageWithAuthorization(getType(), authorizationManager, mapper) {
+      @Override
+      protected void writeConfigurationExtra(ObjectMapper mapper, ObjectNode config) throws IOException {
+        AbstractInstituteDefaultsController.this.writeConfiguration(mapper, config);
+      }
+    };
+    return listPage.list(model, getAll().stream().map(this::asDto));
   }
 
   protected void writeConfiguration(ObjectMapper mapper, ObjectNode config) throws IOException {

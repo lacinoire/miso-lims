@@ -63,6 +63,8 @@ public class EditLibraryTemplateController {
   private LibraryTemplateService libraryTemplateService;
   @Autowired
   private ProjectService projectService;
+  @Autowired
+  private ObjectMapper mapper;
 
   @Value("${miso.detailed.sample.enabled}")
   private Boolean detailedSample;
@@ -162,7 +164,6 @@ public class EditLibraryTemplateController {
 
   private ModelAndView libraryTemplatePage(LibraryTemplate template, ModelMap model) throws JsonProcessingException {
     LibraryTemplateDto dto = Dtos.asDto(template);
-    ObjectMapper mapper = new ObjectMapper();
     model.put("template", template);
     model.put("templateDto", mapper.writeValueAsString(dto));
     model.put("templateProjects", mapper.writeValueAsString(template.getProjects().stream().map(Dtos::asDto).collect(Collectors.toList())));
@@ -201,8 +202,8 @@ public class EditLibraryTemplateController {
 
     private final LibraryTemplate libraryTemplate;
 
-    public BulkEditTemplateIndicesBackend(LibraryTemplate libraryTemplate) {
-      super("librarytemplate_index", LibraryTemplateIndexDto.class);
+    public BulkEditTemplateIndicesBackend(LibraryTemplate libraryTemplate, ObjectMapper mapper) {
+      super("librarytemplate_index", LibraryTemplateIndexDto.class, mapper);
       this.libraryTemplate = libraryTemplate;
     }
 
@@ -232,7 +233,7 @@ public class EditLibraryTemplateController {
   public ModelAndView editIndices(@PathVariable("templateId") long templateId, @RequestParam("positions") String positions, ModelMap model)
       throws IOException {
     LibraryTemplate template = getTemplateWithIndexFamily(templateId);
-    return new BulkEditTemplateIndicesBackend(template).edit(positions, model);
+    return new BulkEditTemplateIndicesBackend(template, mapper).edit(positions, model);
   }
 
   private LibraryTemplate getTemplate(long templateId) throws IOException {

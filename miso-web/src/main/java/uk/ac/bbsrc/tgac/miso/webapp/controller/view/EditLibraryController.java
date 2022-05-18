@@ -192,6 +192,8 @@ public class EditLibraryController {
   private AuthorizationManager authorizationManager;
   @Autowired
   private NamingSchemeHolder namingSchemeHolder;
+  @Autowired
+  private ObjectMapper mapper;
 
   public void setLibraryService(LibraryService libraryService) {
     this.libraryService = libraryService;
@@ -245,7 +247,6 @@ public class EditLibraryController {
         .collect(Collectors.toList()));
     model.put("libraryAliquots", library.getLibraryAliquots().stream()
         .map(ldi -> Dtos.asDto(ldi, false)).collect(Collectors.toList()));
-    ObjectMapper mapper = new ObjectMapper();
     ObjectNode config = mapper.createObjectNode();
     config.putPOJO("library", Dtos.asDto(library, false));
     model.put("libraryAliquotsConfig", mapper.writeValueAsString(config));
@@ -275,7 +276,7 @@ public class EditLibraryController {
   }
 
   private final BulkEditTableBackend<Library, LibraryDto> libraryBulkEditBackend = new BulkEditTableBackend<Library, LibraryDto>(
-      "library", LibraryDto.class, "Libraries") {
+      "library", LibraryDto.class, "Libraries", mapper) {
 
     @Override
     protected Stream<Library> load(List<Long> ids) throws IOException {
@@ -573,8 +574,7 @@ public class EditLibraryController {
     batchDto.setSopLabel(sop.getAlias() + "v." + sop.getVersion());
     batchDto.setSopUrl(sop.getUrl());
     batchDto.setKitName(kit.getName());
-    
-    ObjectMapper mapper = new ObjectMapper();
+
     model.put("batchId", StringEscapeUtils.escapeJavaScript(batchId));
     model.put("batchDto", mapper.writeValueAsString(batchDto));
 
@@ -583,7 +583,7 @@ public class EditLibraryController {
 
   @GetMapping("/{id}/qc-hierarchy")
   public ModelAndView getQcHierarchy(@PathVariable long id, ModelMap model) throws IOException {
-    return MisoWebUtils.getQcHierarchy("Library", id, qcNodeService::getForLibrary, model);
+    return MisoWebUtils.getQcHierarchy("Library", id, qcNodeService::getForLibrary, model, mapper);
   }
 
 }

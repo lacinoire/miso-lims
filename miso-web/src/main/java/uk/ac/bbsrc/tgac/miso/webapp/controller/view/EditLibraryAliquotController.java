@@ -78,6 +78,8 @@ public class EditLibraryAliquotController {
   private QcNodeService qcNodeService;
   @Autowired
   private IndexChecker indexChecker;
+  @Autowired
+  private ObjectMapper mapper;
 
   @GetMapping("/{aliquotId}")
   public ModelAndView edit(ModelMap model, @PathVariable long aliquotId) throws IOException {
@@ -86,8 +88,6 @@ public class EditLibraryAliquotController {
       throw new NotFoundException("Library aliquot not found");
     }
     model.put("title", "Library Aliquot " + aliquot.getId());
-
-    ObjectMapper mapper = new ObjectMapper();
     model.put("aliquot", aliquot);
     model.put("aliquotDto", mapper.writeValueAsString(Dtos.asDto(aliquot, false)));
     List<Pool> pools = poolService.listByLibraryAliquotId(aliquotId);
@@ -272,7 +272,7 @@ public class EditLibraryAliquotController {
   }
 
   private final BulkEditTableBackend<LibraryAliquot, LibraryAliquotDto> bulkEditBackend = new BulkEditTableBackend<>(
-      "libraryaliquot", LibraryAliquotDto.class, "Library Aliquots") {
+      "libraryaliquot", LibraryAliquotDto.class, "Library Aliquots", mapper) {
 
     @Override
     protected LibraryAliquotDto asDto(LibraryAliquot model) {
@@ -375,8 +375,8 @@ public class EditLibraryAliquotController {
     private final BoxDto newBox;
 
     public BulkCustomPoolTableBackend(int poolQuantity, String idString, LibraryAliquotService libraryAliquotService,
-        BoxDto newBox) throws IOException {
-      super("pool", PoolDto.class);
+        BoxDto newBox, ObjectMapper mapper) throws IOException {
+      super("pool", PoolDto.class, mapper);
       this.poolQuantity = poolQuantity;
       List<LibraryAliquot> ldis = libraryAliquotService.listByIdList(parseIds(idString));
       List<PlatformType> platformTypes = ldis.stream()
@@ -418,8 +418,8 @@ public class EditLibraryAliquotController {
     String aliquotIds = getStringInput("ids", form, true);
     int poolQuantity = getIntegerInput("quantity", form, true);
     Long boxId = getLongInput("boxId", form, false);
-    BulkCustomPoolTableBackend bulkCustomPoolTableBackend = new BulkCustomPoolTableBackend(poolQuantity, aliquotIds, libraryAliquotService,
-        (boxId != null ? Dtos.asDto(boxService.get(boxId), true) : null));
+    BulkCustomPoolTableBackend bulkCustomPoolTableBackend = new BulkCustomPoolTableBackend(poolQuantity, aliquotIds,
+        libraryAliquotService, (boxId != null ? Dtos.asDto(boxService.get(boxId), true) : null), mapper);
     return bulkCustomPoolTableBackend.create(model);
   }
 
@@ -476,7 +476,7 @@ public class EditLibraryAliquotController {
 
   @GetMapping("/{id}/qc-hierarchy")
   public ModelAndView getQcHierarchy(@PathVariable long id, ModelMap model) throws IOException {
-    return MisoWebUtils.getQcHierarchy("Library Aliquot", id, qcNodeService::getForLibraryAliquot, model);
+    return MisoWebUtils.getQcHierarchy("Library Aliquot", id, qcNodeService::getForLibraryAliquot, model, mapper);
   }
 
 }
